@@ -2,7 +2,7 @@ import os
 import subprocess
 import time
 from loguru import logger
-from app.transfer_service import send_image_to_server
+
 
 def capture_image():
     folder_path = "captured_images"

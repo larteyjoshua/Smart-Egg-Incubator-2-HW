@@ -3,7 +3,7 @@ import base64
 from loguru import logger
 
 
-def encrypt_device_id(device_id:str):
+def encrypt_device_id(device_id: str):
     key = 
     fernet = Fernet(key)
     logger.info("encrpytion")
