@@ -32,9 +32,10 @@ def send_image_to_server(image_path):
 
     try:
         response = requests.post(url, data=json_data, headers=headers)
-        response.raise_for_status()  
-        logger.info("Image sent successfully.")
-        os.remove(image_path)
+        response.raise_for_status() 
+        if (response.status_code == 200): 
+            logger.info("Image sent successfully.")
+            os.remove(image_path)
         return response.status_code
     except requests.exceptions.RequestException as e:
         logger.exception(f"Error sending image: {e}") 

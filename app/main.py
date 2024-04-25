@@ -31,10 +31,11 @@ GPIO.setup(humidityFanPin, GPIO.OUT)
 GPIO.setup(roatingMotorPin, GPIO.OUT)
 
 def rotating_egg_tray():
+    logger.info('Tray Rotation Process Started')
     GPIO.setup(roatingMotorPin, GPIO.HIGH)
-    logger.info("Rotaing Motor")
     time.sleep(120)
     GPIO.setup(roatingMotorPin, GPIO.LOW)
+    logger.info('Tray Rotation Process Ended')
 
 async def config_parameters():
     status=request_hatching_status(device_id)
@@ -61,13 +62,27 @@ app = FastAPI(lifespan=lifespan)
 
 @repeat_every(seconds=60 * 60) 
 async def capturing_image() -> None:
+    status_data = read_hatching_status()
+    operating_status =status_data.get('operating')
+    if operating_status == False:
+        logger.info('Hatching Process is not Started by User')
+        return
+    
+    GPIO.setup(heatingLampPin, GPIO.HIGH)
     image_path = capture_image()
     logger.info(image_path)
     send_image_to_server(image_path)
+    GPIO.setup(heatingLampPin, GPIO.LOW)
 
 
 @repeat_every(seconds=10) 
 async def process_controls() -> None:
+    status_data = read_hatching_status()
+    operating_status =status_data.get('operating')
+    if operating_status == False:
+        logger.info('Hatching Process is not Started by User')
+        return
+    
     settings_data = read_device_settings()
     minTemp = settings_data.get('min_temperature')
     maxTemp = settings_data.get('max_temperature')
@@ -93,6 +108,12 @@ async def process_controls() -> None:
 
 @repeat_every(seconds=60) 
 async def roating_tray() -> None:
+    status_data = read_hatching_status()
+    operating_status =status_data.get('operating')
+    if  operating_status == False:
+        logger.info('Hatching Process is not Started by User')
+        return
+    
     settings_data = read_device_settings()
     rotation = settings_data.get('rotation')
     rotating_hours = settings_data.get('rotating_hours')
@@ -111,6 +132,13 @@ async def send_sensor_reading() -> None:
     temperature, humidity = read_sensor()
     logger.info(temperature)
     logger.info(humidity)
+    
+    status_data = read_hatching_status()
+    operating_status =status_data.get('operating')
+    if  operating_status == False:
+        logger.info('Hatching Process is not Started by User')
+        return
+    
     send_sensor_data(temperature, humidity)
 
 
