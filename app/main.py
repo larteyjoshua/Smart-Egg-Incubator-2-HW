@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
     await capturing_image()
     await process_controls()
     await roating_tray()
-    # await send_sensor_reading()
+    await send_sensor_reading()
     yield
     # --- shutdown ---
            
