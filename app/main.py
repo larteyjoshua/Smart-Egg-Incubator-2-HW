@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from loguru import logger
 from fastapi_utilities import repeat_every
 from app.camera_service import capture_image
@@ -18,6 +18,7 @@ from app.security import decrypt_device_id
 import RPi.GPIO as GPIO
 import time
 import threading
+from contextlib import asynccontextmanager
 
 device_id=1
 heatingLampPin = 26
@@ -35,40 +36,63 @@ def rotating_egg_tray():
     time.sleep(120)
     GPIO.setup(roatingMotorPin, GPIO.LOW)
 
-status=request_hatching_status(device_id)
-if status:
-    store_hatching_status(status)
+async def config_parameters():
+    status=request_hatching_status(device_id)
+    logger.info(status)
+    if status:
+        store_hatching_status(status)
+        
+    settings=request_device_settings(device_id)
+    logger.info(settings)
+    if settings:
+        store_device_settings(settings)
     
-settings=request_device_settings(device_id)
-if settings:
-    store_device_settings(settings)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await config_parameters()
+    await capturing_image()
+    await process_controls()
+    await roating_tray()
+    # await send_sensor_reading()
+    yield
+    # --- shutdown ---
            
-app = FastAPI()
-@app.on_event("startup")
-@repeat_every(seconds=60 * 60)  # 1 hour
-def captuturing_image() -> None:
+app = FastAPI(lifespan=lifespan)
+
+@repeat_every(seconds=60 * 60) 
+async def capturing_image() -> None:
     image_path = capture_image()
     logger.info(image_path)
     send_image_to_server(image_path)
 
-@app.on_event("startup")
+
 @repeat_every(seconds=10) 
-def sensor_readings() -> None:
-    temperature, humidity = read_sensor()
-    if temperature > 37.7:
-        GPIO.setup(heatingLampPin, GPIO.LOW)
-    elif temperature < 37:
-        GPIO.setup(heatingLampPin, GPIO.HIGH)
-        
-        
-    if humidity > 55:
-        GPIO.setup(humidityFanPin, GPIO.HIGH)
-    elif humidity < 50:
-         GPIO.setup(humidityFanPin, GPIO.LOW)
+async def process_controls() -> None:
+    settings_data = read_device_settings()
+    minTemp = settings_data.get('min_temperature')
+    maxTemp = settings_data.get('max_temperature')
+    minHumid = settings_data.get('min_humidity')
+    maxHumid = settings_data.get('max_humidity')
     
-@app.on_event("startup")
+    temperature, humidity = read_sensor()
+    if temperature > maxTemp:
+        GPIO.setup(heatingLampPin, GPIO.LOW)
+        logger.info('Heating Process Off')
+    elif temperature < minTemp:
+        GPIO.setup(heatingLampPin, GPIO.HIGH)
+        logger.info('Heating Process On')
+        
+        
+    if humidity > maxHumid:
+        GPIO.setup(humidityFanPin, GPIO.HIGH)
+        logger.info('Humidity Reduction Process on')
+    elif humidity < minHumid:
+        GPIO.setup(humidityFanPin, GPIO.LOW)
+        logger.info('Humidity Reduction Process Off')
+    
+
 @repeat_every(seconds=60) 
-def roating_tray() -> None:
+async def roating_tray() -> None:
     settings_data = read_device_settings()
     rotation = settings_data.get('rotation')
     rotating_hours = settings_data.get('rotating_hours')
@@ -82,7 +106,6 @@ def roating_tray() -> None:
        
     
     
-@app.on_event("startup")
 @repeat_every(seconds=60*60) 
 async def send_sensor_reading() -> None:
     temperature, humidity = read_sensor()
