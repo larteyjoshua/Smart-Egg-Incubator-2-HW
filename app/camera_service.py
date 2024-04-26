@@ -1,7 +1,8 @@
 import os
 import subprocess
 import time
-from loguru import logger
+from app.logger import logging
+
 
 
 def capture_image():
@@ -10,5 +11,5 @@ def capture_image():
     image_path = os.path.join(folder_path, f"image_{int(time.time())}.jpg")
     command = f"fswebcam -r {320}x{240} --no-banner {image_path}"
     subprocess.run(command, shell=True, check=True)
-    logger.info("Capturing Completed: " + image_path)
+    logging("Capturing Completed: " + image_path)
     return image_path
