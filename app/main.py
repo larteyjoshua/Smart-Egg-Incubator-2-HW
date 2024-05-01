@@ -174,6 +174,20 @@ async def receive_status(data: dict):
             return {"msg: Devices Hatching Status Updated!"}
         else:
             raise HTTPException(status_code=404, detail="Device id Mismatch")
+        
+@app.post("/current-readings")
+async def receive_status(data: dict):
+        logging(data)
+        encrpyted_id = data.get('encrypted_device_id')
+        decrpyted_id=int(decrypt_device_id(encrpyted_id))
+    
+        if decrpyted_id == device_id:
+            temperature, humidity = read_sensor()
+            logging(temperature)
+            logging(humidity)
+            return {"temperature": temperature, "humidity":humidity}
+        else:
+            raise HTTPException(status_code=404, detail="Device id Mismatch")
     
     
 
