@@ -176,7 +176,7 @@ async def receive_status(data: dict):
             raise HTTPException(status_code=404, detail="Device id Mismatch")
         
 @app.post("/current-readings")
-async def receive_status(data: dict):
+async def current_readings(data: dict):
         logging(data)
         encrpyted_id = data.get('encrypted_device_id')
         decrpyted_id=int(decrypt_device_id(encrpyted_id))
