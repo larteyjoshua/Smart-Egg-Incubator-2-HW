@@ -1,10 +1,10 @@
 {
-    "min_temperature": 37.0,
-    "max_temperature": 38.0,
+    "min_temperature": 34.0,
+    "max_temperature": 36.0,
     "min_humidity": 50.0,
     "max_humidity": 55.0,
     "rotating_hours": 8.0,
     "device_id": 1,
-    "timestamp": "2024-04-25T03:00:44.149175",
+    "timestamp": "2024-05-01T03:14:03.529410",
     "rotation": true
 }

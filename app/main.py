@@ -19,18 +19,24 @@ import threading
 from contextlib import asynccontextmanager
 from app.logger import logging
 
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+
 device_id=1
 heatingLampPin = 26
 humidityFanPin = 6
 roatingMotorPin = 27
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
+
+
 GPIO.setup(heatingLampPin, GPIO.OUT)
 GPIO.setup(humidityFanPin, GPIO.OUT)
 GPIO.setup(roatingMotorPin, GPIO.OUT)
+
+
 GPIO.output(heatingLampPin, GPIO.HIGH)
 GPIO.output(humidityFanPin, GPIO.HIGH)
 GPIO.output(roatingMotorPin, GPIO.HIGH)
+
 
 def rotating_egg_tray():
     logging('Tray Rotation Process Started')
@@ -71,12 +77,9 @@ async def capturing_image() -> None:
     if operating_status == False:
         logging('Hatching Process is not Started by User-Capture')
     else:
-    
-        GPIO.output(heatingLampPin,  GPIO.LOW)
         image_path = capture_image()
         logging(image_path)
         send_image_to_server(image_path)
-        GPIO.output(heatingLampPin,  GPIO.HIGH)
 
 
 @repeat_every(seconds=10) 
@@ -99,7 +102,7 @@ async def process_controls() -> None:
             GPIO.output(heatingLampPin,  GPIO.HIGH)
             logging('Heating Process Off')
         elif temperature < minTemp:
-            GPIO.output(heatingLampPin, GPIO.LOW)
+            GPIO.output(heatingLampPin,  GPIO.LOW)
             logging('Heating Process On')
             
         if humidity > maxHumid:
@@ -188,6 +191,7 @@ async def current_readings(data: dict):
             return {"temperature": temperature, "humidity":humidity}
         else:
             raise HTTPException(status_code=404, detail="Device id Mismatch")
+        
     
     
 
