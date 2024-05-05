@@ -1,7 +1,7 @@
 import Adafruit_DHT
 import time
 from app.logger import logging
-sensor = Adafruit_DHT.DHT11
+sensor = Adafruit_DHT.DHT22
 import RPi.GPIO as GPIO
 
 GPIO.setwarnings(False)
@@ -23,5 +23,10 @@ def read_sensor():
            logging("Failed to retrieve data from the sensor")
 
     except Exception as e:
+        GPIO.output(sensorPin, GPIO.LOW)
         logging(f"Error: {e}")
-    GPIO.output(sensorPin, GPIO.LOW)
+    
+    finally:
+        time.sleep(1)
+        GPIO.output(sensorPin, GPIO.LOW)
+        

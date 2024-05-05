@@ -71,7 +71,7 @@ def request_hatching_status(device_id):
         return hatching_status
     except requests.exceptions.RequestException as e:
         logging(f"Error: {e}")
-        return  {"operating": False}
+        return  {"operating": True}
     
     
 def request_device_settings(device_id):
